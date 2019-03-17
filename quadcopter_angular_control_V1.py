@@ -194,8 +194,6 @@ class AnglesController:
         
 
 
-# In[ ]:
-
 
 #################################################  ROSNode Function  ##########################################################
 def angular_control():
@@ -205,21 +203,49 @@ def angular_control():
 
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
 
-    tic=time()
+    tic=rospy.get_time()()
     sleep(1) #to avoid zero_division_error in the first loop
 
     while not rospy.is_shutdown():
         rospy.Subscriber("/tf", TFMessage, callback)
 
+def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
+    rate_data=RateThrust()
+      
+    rate_data.header.stamp = rospy.Time.now()
+    rate_data.header.frame_id = "world"
+    rate_data.header.seq = seq
+    rate_data.angular_rates.x=np.float64(roll_rate)
+    rate_data.angular_rates.y=np.float64(pitch_rate)
+    rate_data.angular_rates.z=np.float64(yaw_rate)
+    rate_data.thrust.x=np.float64(0.0)
+    rate_data.thrust.x=np.float64(0.0)
+    rate_data.thrust.z=np.float64(Thrust)
+    
+    pub.publish(rate_data)
+    seq=seq+1
 
-def callback(data):## Function that get pose as data 
-    x,y,z,q1,q2,q3,q4=uav_groundtruth_pose()# *** A faire par Nabil 
+def uav_groundtruth_pose(data):
+    
+    x=data.transforms[0].transform.translation.x
+    y=data.transforms[0].transform.translation.y
+    z=data.transforms[0].transform.translation.z
+    q1=data.transforms[0].transform.rotation.x
+    q2=data.transforms[0].transform.rotation.y
+    q3=data.transforms[0].transform.rotation.z
+    q4=data.transforms[0].transform.rotation.w
+    
+    return (x,y,z,q1,q2,q3,q4)
+
+def callback(data):## Function where we can use the tf data 
+
+
+    x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(data)# *** A faire par Nabil 
     
     pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
-    pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
     phi,theta,psi=roll,pitch,yaw
     
-    toc=time()
+    toc=rospy.get_time()()
     delta_t=toc-tic
     
     phi_rate = controller.compute_phi_rate(desired_phi, phi, delta_t)
@@ -227,13 +253,13 @@ def callback(data):## Function that get pose as data
     psi_rate = controller.compute_psi_rate(desired_psi, psi, delta_t)
     thrust= controller.compute_thrust(desired_z, z, delta_t)
     
-    tic=time()
+    tic=rospy.get_time()()
 
     p, q, r = phidot_thetadot_psidot_to_pqr(phi_rate, theta_rate, psi_rate, theta, phi)
     roll_rate, pitch_rate, yaw_rate = p, q, r
 
     ############Publish 
-    Publish_RateThrust_msg(Thrust,roll_rate,pitch_rate,yaw_rate) # *** A faire par Nabil
+    Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate) # *** A faire par Nabil
         
 
 #################################################  ROSNode Main  ##########################################################
@@ -243,22 +269,4 @@ if __name__ == '__main__':
 
    except rospy.ROSInterruptException:
       pass
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
