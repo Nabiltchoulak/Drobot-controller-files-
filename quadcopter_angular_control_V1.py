@@ -70,13 +70,31 @@ def pqr_to_phidot_thetadot_psidot(p,q,r,theta,phi):
     
     return(phi_dot,theta_dot,psi_dot)
 
-def toEulerAngle(q1, q2, q3, q4):
+def toEulerAngle(i,j,k,one):
     
-    roll = atan2(2*(q1*q2+q3*q4), 1-2*(q2**2+q3**2))
-    pitch = asin(2*(q1*q3-q2*q4))
-    yaw = atan2(2*(q1*q4+q2*q3), 1-2*(q3**2+q4**2))
+    #code found here: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    #handle singularities here: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
     
-    return (roll, pitch, yaw)
+    q_w,q_x,q_y,q_z=one,i,j,k #modified to match quaternion ordrer given by flightGoggle
+    
+    #roll (x-axis rotation)
+    sinr_cosp = 2.0 * (q_w * q_x + q_y * q_z);
+    cosr_cosp = 1.0 - 2.0 * (q_x * q_x + q_y * q_y);
+    roll = atan2(sinr_cosp, cosr_cosp);
+
+    #pitch (y-axis rotation)
+    sinp = +2.0 * (q_w * q_y - q_z * q_x);
+    if (fabs(sinp) >= 1):
+        pitch = copysign(pi / 2, sinp); # use 90 degrees if out of range
+    else:
+        pitch = asin(sinp);
+
+    #yaw (z-axis rotation)
+    siny_cosp = +2.0 * (q_w * q_z + q_x * q_y);
+    cosy_cosp = +1.0 - 2.0 * (q_y * q_y + q_z * q_z);  
+    yaw = atan2(siny_cosp, cosy_cosp);
+    
+    return (pitch,roll,yaw)
 
 def phidot_thetadot_psidot_to_pqr(phi_dot,theta_dot,psi_dot,theta,phi):
     p=phi_dot - sin(theta)*psi_dot
@@ -95,8 +113,6 @@ def angle_transf(angle):
         
         
 
-
-# In[114]:
 
 
 ############################################ Quadcopter Controller class #################################################
@@ -279,6 +295,7 @@ def callback(data):## Function where we can use the tf data
     x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(data)# *** A faire par Nabil 
     
     pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
+    pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
     phi,theta,psi=roll,pitch,yaw
     
     toc=rospy.get_time()
