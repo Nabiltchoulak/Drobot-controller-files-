@@ -102,8 +102,18 @@ def angle_transf(angle):
 ############################################ Quadcopter Controller class #################################################
 class AnglesController:
     
-    def __init__(self):
-
+    def __init__(self,phi0=0,theta0=0,psi0=0,z0=1):
+        
+        #phi : roll , theta : pitch , yaw : psi
+        self.phi=phi0 % (2*pi)
+        self.theta=theta0 % (2*pi)
+        self.psi=psi0 % (2*pi)
+        self.phi_dot=0 
+        self.theta_dot=0 
+        self.psi_dot=0 
+        
+        self.z=z0
+        self.z_dot=0
         
         #phi_rate PID errors
         self.error_phi_integral=0
@@ -131,13 +141,35 @@ class AnglesController:
         #string representation of controller class
         return "phi:{} , theta:{} , psi:{} , z:{} ".format(self.phi,self.theta,self.psi,self.z)
     
+    def move(self,pitch_rate,roll_rate,yaw_rate,thrust,delta_t):
+        # Quadcopter dynamics using Euler's integration
+        # Assuming that angular_velocities p,q and r are perfectly controlled
+        # p,q,r : angular velocities in the quadcopter frame
+        # p,q,r = roll_rate,pitch_rate,yaw_rate 
+        
+        #z : altitude 
+        
+        p,q,r = roll_rate,pitch_rate,yaw_rate
+         
+        self.phi_dot,self.theta_dot,self.psi_dot=pqr_to_phidot_thetadot_psidot(p,q,r,self.theta,self.phi) 
+        
+        self.phi += delta_t * self.phi_dot + normal(0,a_n)
+        self.theta += delta_t * self.theta_dot + normal(0,a_n)
+        self.psi+= delta_t * self.psi_dot + normal(0,a_n)
+        
+        self.phi,self.theta,self.psi=angle_transf(self.phi),angle_transf(self.theta),angle_transf(self.psi)
+        
+        self.z_dot += delta_t*(thrust/m*cos(self.phi)*cos(self.theta) - g ) + normal(0,l_n)
+        self.z += delta_t*self.z_dot + normal(0,l_n)
+        
+        
  
     def compute_phi_rate(self,desired_phi,actual_phi,delta_t):
 
         error_phi=desired_phi-actual_phi
         
         self.error_phi_integral+=error_phi*delta_t
-        self.error_phi_integral=min(self.error_phi_integral,self.max_phi_integral)
+        self.error_phi_integral=max(-self.max_phi_integral,min(self.error_phi_integral,self.max_phi_integral))
 
         phi_derivative= (self.last_phi-actual_phi)/delta_t #avoid derivative_kick
         self.last_phi=actual_phi
@@ -151,7 +183,7 @@ class AnglesController:
         error_theta=desired_theta-actual_theta
         
         self.error_theta_integral+=error_theta*delta_t
-        self.error_theta_integral=min(self.error_theta_integral,self.max_theta_integral)
+        self.error_theta_integral=max(-self.max_theta_integral,min(self.error_theta_integral,self.max_theta_integral))
         
         theta_derivative= (self.last_theta-actual_theta)/delta_t #avoid derivative_kick
         self.last_theta=actual_theta
@@ -165,7 +197,7 @@ class AnglesController:
         error_psi=desired_psi-actual_psi
         
         self.error_psi_integral+=error_psi*delta_t
-        self.error_psi_integral=min(self.error_psi_integral,self.max_psi_integral)
+        self.error_psi_integral=max(-self.max_psi_integral,min(self.error_psi_integral,self.max_psi_integral))
         
         psi_derivative= (self.last_psi-actual_psi)/delta_t #avoid derivative_kick
         self.last_psi=actual_psi
@@ -181,7 +213,7 @@ class AnglesController:
         error_z=desired_z-actual_z
         
         self.error_z_integral+=error_z*delta_t
-        self.error_z_integral=min(self.error_z_integral,self.max_z_integral)
+        self.error_z_integral=max(-self.max_z_integral,min(self.error_z_integral,self.max_z_integral))
         
         z_derivative= (self.last_z-actual_z)/delta_t #avoid derivative_kick
         self.last_z=actual_z
