@@ -216,6 +216,7 @@ def callback(data):## Function that get pose as data
     x,y,z,q1,q2,q3,q4=uav_groundtruth_pose()# *** A faire par Nabil 
     
     pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
+    pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
     phi,theta,psi=roll,pitch,yaw
     
     toc=time()
