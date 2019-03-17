@@ -16,7 +16,7 @@ from tf2_msgs.msg import TFMessage
 ##### Nodes handler
 rospy.init_node('angular_control', anonymous=True)
 pub = rospy.Publisher('/uav/input/rateThrust',RateThrust ,queue_size=1)
-
+seq=0
 ##### Constants
 g=9.80655 # gravity
 m=1 # vehicle mass = 1kg
@@ -259,7 +259,7 @@ def angular_control():
     sleep(1) #to avoid zero_division_error in the first loop
 
     while not rospy.is_shutdown():
-        rospy.Subscriber("/tf", TFMessage, callback,(tic,controller,desired_pose))
+        rospy.Subscriber("/tf", TFMessage, callback,(tic,controller,desired_pose,seq))
 
 def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data=RateThrust()
@@ -295,7 +295,7 @@ def callback(data,args):## Function where we can use the tf data
     desired_pose=args[2]
     desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
     x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(data)# *** A faire par Nabil 
-    
+    seq=args[3]
     pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
     pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
     phi,theta,psi=roll,pitch,yaw
@@ -314,7 +314,7 @@ def callback(data,args):## Function where we can use the tf data
     roll_rate, pitch_rate, yaw_rate = p, q, r
 
     ############Publish 
-    Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate) # *** A faire par Nabil
+    Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate) # *** A faire par Nabil
         
 
 #################################################  ROSNode Main  ##########################################################
