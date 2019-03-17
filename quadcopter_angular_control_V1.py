@@ -9,8 +9,14 @@ from math import *
 from time import time,sleep
 import rospy
 import numpy as np
+from mav_msgs.msg import RateThrust
 from tf2_msgs.msg import TFMessage
 ##############################################      Hyperparameters    ###################################################
+
+##### Nodes handler
+rospy.init_node('/control/angular_control', anonymous=True)
+pub = rospy.Publisher('/uav/input/rateThrust',RateThrust ,queue_size=1)
+
 ##### Constants
 g=9.80655 # gravity
 m=1 # vehicle mass = 1kg
@@ -52,9 +58,7 @@ kp_psi_rate,kd_psi_rate,ki_psi_rate=(1,0,0.1)
 #PID thrust
 kp_thrust,kd_thrust,ki_thrust=(50,10,10)
 
-##### Nodes handler
-rospy.init_node('/control/angular_control', anonymous=True)
-pub = rospy.Publisher('/uav/input/rateThrust',RateThrust ,queue_size=1)
+
 
 ############################################      Utils functions     #####################################################
 
@@ -203,7 +207,7 @@ def angular_control():
 
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
 
-    tic=rospy.get_time()()
+    tic=rospy.get_time()
     sleep(1) #to avoid zero_division_error in the first loop
 
     while not rospy.is_shutdown():
@@ -245,7 +249,7 @@ def callback(data):## Function where we can use the tf data
     pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
     phi,theta,psi=roll,pitch,yaw
     
-    toc=rospy.get_time()()
+    toc=rospy.get_time()
     delta_t=toc-tic
     
     phi_rate = controller.compute_phi_rate(desired_phi, phi, delta_t)
@@ -253,7 +257,7 @@ def callback(data):## Function where we can use the tf data
     psi_rate = controller.compute_psi_rate(desired_psi, psi, delta_t)
     thrust= controller.compute_thrust(desired_z, z, delta_t)
     
-    tic=rospy.get_time()()
+    tic=rospy.get_time()
 
     p, q, r = phidot_thetadot_psidot_to_pqr(phi_rate, theta_rate, psi_rate, theta, phi)
     roll_rate, pitch_rate, yaw_rate = p, q, r
