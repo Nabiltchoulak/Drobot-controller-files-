@@ -255,11 +255,11 @@ def angular_control():
 
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
 
-    tic=rospy.get_time()
-    sleep(1) #to avoid zero_division_error in the first loop
-
+    #tic=rospy.get_time()
+    #sleep(1) #to avoid zero_division_error in the first loop
+    rate = rospy.Rate(1000) #rate of 100Hz
     while not rospy.is_shutdown():
-        rospy.Subscriber("/tf", TFMessage, callback,(tic,controller,desired_pose,seq))
+        rospy.Subscriber("/tf", TFMessage, callback,(rate,controller,desired_pose,seq))
 
 def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data=RateThrust()
@@ -290,7 +290,7 @@ def uav_groundtruth_pose(data):
     return (x,y,z,q1,q2,q3,q4)
 
 def callback(data,args):## Function where we can use the tf data 
-    tic=args[0]
+    rate=args[0]
     controller=args[1]
     desired_pose=args[2]
     desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
@@ -301,18 +301,18 @@ def callback(data,args):## Function where we can use the tf data
     phi,theta,psi=roll,pitch,yaw
     
     toc=rospy.get_time()
-    delta_t=toc-tic
+    delta_t=0.001
     
     phi_rate = controller.compute_phi_rate(desired_phi, phi, delta_t)
     theta_rate = controller.compute_theta_rate(desired_theta, theta, delta_t)
     psi_rate = controller.compute_psi_rate(desired_psi, psi, delta_t)
     thrust= controller.compute_thrust(desired_z, z, delta_t)
     
-    tic=rospy.get_time()
+    
 
     p, q, r = phidot_thetadot_psidot_to_pqr(phi_rate, theta_rate, psi_rate, theta, phi)
     roll_rate, pitch_rate, yaw_rate = p, q, r
-
+    rate.sleep()
     ############Publish 
     Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate) # *** A faire par Nabil
         
