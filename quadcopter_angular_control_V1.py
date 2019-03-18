@@ -257,7 +257,7 @@ def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data=RateThrust()
       
     rate_data.header.stamp = rospy.Time.now()
-    rate_data.header.frame_id = "world"
+    rate_data.header.frame_id = "uav/imu"
     rate_data.angular_rates.x=np.float64(roll_rate)
     rate_data.angular_rates.y=np.float64(pitch_rate)
     rate_data.angular_rates.z=np.float64(yaw_rate)
