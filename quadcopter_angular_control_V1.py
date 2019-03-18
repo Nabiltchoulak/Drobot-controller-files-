@@ -3,6 +3,9 @@
 # license removed for brevity
 # In[1]:
 
+## This structure is based on the ros tf2 listener provided by tf2 class 
+### link : http://wiki.ros.org/tf2/Tutorials/Writing%20a%20tf2%20listener%20%28Python%29
+
 
 #############################################       Dependencies       ###################################################
 from math import *
