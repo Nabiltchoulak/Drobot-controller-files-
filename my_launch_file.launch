@@ -1,0 +1,18 @@
+    <launch>
+
+        <node pkg="autopilot" type="autopilot" name="autopilot" output="screen">
+          <rosparam file="$(find state_predictor)/parameters/hummingbird.yaml" />
+          <rosparam file="$(find rpg_rotors_interface)/parameters/position_controller.yaml" />
+          <rosparam file="$(find rpg_rotors_interface)/parameters/autopilot.yaml" />
+          
+          <param name="position_controller/use_rate_mode" value="True" />
+          
+          <param name="velocity_estimate_in_world_frame" value="false" />
+          <param name="state_estimate_timeout" value="0.1" />
+          <param name="control_command_delay" value="0.05" />
+          <param name="enable_command_feedthrough" value="true" />
+          
+          <!--remap from="autopilot/state_estimate" to="ground_truth/odometry" /-->
+          <remap from="autopilot/state_estimate" to="odom" />
+        </node>
+    </launch>
