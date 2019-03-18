@@ -60,7 +60,7 @@ kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(100,70,1)
+kp_thrust,kd_thrust,ki_thrust=(44,13,70)
 
 
 
