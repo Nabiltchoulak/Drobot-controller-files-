@@ -39,7 +39,7 @@ max_phi_rate= max_roll_rate
 min_phi_rate=-max_phi_rate
 
 
-max_yaw_rate= pi/4 # rad/s
+max_yaw_rate= pi/2 # rad/s
 min_yaw_rate=-max_yaw_rate
 max_psi_rate= max_yaw_rate
 min_psi_rate=-max_psi_rate
@@ -51,16 +51,16 @@ min_thrust= 0
 
 ##### PIDS
 #PID theta_rate
-kp_theta_rate,kd_theta_rate,ki_theta_rate=(100,0,0.1)
+kp_theta_rate,kd_theta_rate,ki_theta_rate=(100,10,1)
 
 #PID phi_rate
-kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,0,0.1)
+kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 
 #PID psi_rate
-kp_psi_rate,kd_psi_rate,ki_psi_rate=(1,0,0.1)
+kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(50,10,10)
+kp_thrust,kd_thrust,ki_thrust=(100,70,1)
 
 
 
