@@ -3,20 +3,24 @@
 # license removed for brevity
 # In[1]:
 
+## This structure is based on the ros tf2 listener provided by tf2 class 
+### link : http://wiki.ros.org/tf2/Tutorials/Writing%20a%20tf2%20listener%20%28Python%29
+
 
 #############################################       Dependencies       ###################################################
 from math import *
 from time import time,sleep
 import rospy
 import numpy as np
+import tf2_ros
+import geometry_msgs.msg
 from mav_msgs.msg import RateThrust
 from tf2_msgs.msg import TFMessage
 ##############################################      Hyperparameters    ###################################################
 
 ##### Nodes handler
-rospy.init_node('angular_control', anonymous=True)
-pub = rospy.Publisher('/uav/input/rateThrust',RateThrust ,queue_size=1)
-seq=0
+
+
 ##### Constants
 g=9.80655 # gravity
 m=1 # vehicle mass = 1kg
@@ -35,7 +39,7 @@ max_phi_rate= max_roll_rate
 min_phi_rate=-max_phi_rate
 
 
-max_yaw_rate= pi/4 # rad/s
+max_yaw_rate= pi/2 # rad/s
 min_yaw_rate=-max_yaw_rate
 max_psi_rate= max_yaw_rate
 min_psi_rate=-max_psi_rate
@@ -47,16 +51,16 @@ min_thrust= 0
 
 ##### PIDS
 #PID theta_rate
-kp_theta_rate,kd_theta_rate,ki_theta_rate=(100,0,0.1)
+kp_theta_rate,kd_theta_rate,ki_theta_rate=(100,10,1)
 
 #PID phi_rate
-kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,0,0.1)
+kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 
 #PID psi_rate
-kp_psi_rate,kd_psi_rate,ki_psi_rate=(1,0,0.1)
+kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(50,10,10)
+kp_thrust,kd_thrust,ki_thrust=(28,12,31)
 
 
 
@@ -248,25 +252,12 @@ class AnglesController:
 
 
 #################################################  ROSNode Function  ##########################################################
-def angular_control():
-    desired_pose = [pi/9 , 0 , 0 , 2] #pitch =pi/9 , roll= 0 , yaw= 0 , z=2
-    #desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
-
-
-    controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
-
-    #tic=rospy.get_time()
-    #sleep(1) #to avoid zero_division_error in the first loop
-    rate = rospy.Rate(1000) #rate of 100Hz
-    while not rospy.is_shutdown():
-        rospy.Subscriber("/tf", TFMessage, callback,(rate,controller,desired_pose,seq))
 
 def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data=RateThrust()
       
     rate_data.header.stamp = rospy.Time.now()
-    rate_data.header.frame_id = "world"
-    rate_data.header.seq = seq
+    rate_data.header.frame_id = "uav/imu"
     rate_data.angular_rates.x=np.float64(roll_rate)
     rate_data.angular_rates.y=np.float64(pitch_rate)
     rate_data.angular_rates.z=np.float64(yaw_rate)
@@ -275,53 +266,67 @@ def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data.thrust.z=np.float64(Thrust)
     
     pub.publish(rate_data)
-    seq=seq+1
 
-def uav_groundtruth_pose(data):
+def uav_groundtruth_pose(tf_data):
     
-    x=data.transforms[0].transform.translation.x
-    y=data.transforms[0].transform.translation.y
-    z=data.transforms[0].transform.translation.z
-    q1=data.transforms[0].transform.rotation.x
-    q2=data.transforms[0].transform.rotation.y
-    q3=data.transforms[0].transform.rotation.z
-    q4=data.transforms[0].transform.rotation.w
+    x=tf_data.transform.translation.x
+    y=tf_data.transform.translation.y
+    z=tf_data.transform.translation.z
+    q1=tf_data.transform.rotation.x
+    q2=tf_data.transform.rotation.y
+    q3=tf_data.transform.rotation.z
+    q4=tf_data.transform.rotation.w
     
     return (x,y,z,q1,q2,q3,q4)
 
-def callback(data,args):## Function where we can use the tf data 
-    rate=args[0]
-    controller=args[1]
-    desired_pose=args[2]
-    desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
-    x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(data)# *** A faire par Nabil 
-    seq=args[3]
-    pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
-    pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
-    phi,theta,psi=roll,pitch,yaw
-    
-    toc=rospy.get_time()
-    delta_t=0.001
-    
-    phi_rate = controller.compute_phi_rate(desired_phi, phi, delta_t)
-    theta_rate = controller.compute_theta_rate(desired_theta, theta, delta_t)
-    psi_rate = controller.compute_psi_rate(desired_psi, psi, delta_t)
-    thrust= controller.compute_thrust(desired_z, z, delta_t)
-    
-    
-
-    p, q, r = phidot_thetadot_psidot_to_pqr(phi_rate, theta_rate, psi_rate, theta, phi)
-    roll_rate, pitch_rate, yaw_rate = p, q, r
-    rate.sleep()
-    ############Publish 
-    Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate) # *** A faire par Nabil
-        
 
 #################################################  ROSNode Main  ##########################################################
 if __name__ == '__main__':
-   try:
-      angular_control()
+    ##### initiate the node and the publisher
+    rospy.init_node('angular_control', anonymous=True)
+    pub = rospy.Publisher('/uav/input/rateThrust',RateThrust ,queue_size=1)
+    ####### initiate tf buffer 
+    tfBuffer = tf2_ros.Buffer()
+    listener = tf2_ros.TransformListener(tfBuffer)
 
-   except rospy.ROSInterruptException:
-      pass
+    
+    desired_pose = [pi/9 , 0 , 0 , 2] #pitch =pi/9 , roll= 0 , yaw= 0 , z=2
+    desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
+    controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
 
+    ##### delta_t parameers
+    rate=rospy.Rate(100)
+    delta_t=0.01
+    while not rospy.is_shutdown():
+        
+        ######### lookup for tf data 
+        try:
+
+            trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+            rate.sleep()
+            continue
+
+        ########### get the tf data
+        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans)# *** A faire par Nabil 
+        
+        ###### transform tf to euler frame
+        pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
+        pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
+        phi,theta,psi=roll,pitch,yaw
+    
+        ########### compute controller 
+        phi_rate = controller.compute_phi_rate(desired_phi, phi, delta_t)
+        theta_rate = controller.compute_theta_rate(desired_theta, theta, delta_t)
+        psi_rate = controller.compute_psi_rate(desired_psi, psi, delta_t)
+        thrust= controller.compute_thrust(desired_z, z, delta_t)
+    
+        ############ Convert 
+        p, q, r = phidot_thetadot_psidot_to_pqr(phi_rate, theta_rate, psi_rate, theta, phi)
+        roll_rate, pitch_rate, yaw_rate = p, q, r
+
+        ############ Publish 
+        Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate)
+
+        rate.sleep()
