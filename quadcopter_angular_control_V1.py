@@ -302,7 +302,7 @@ if __name__ == '__main__':
         ######### lookup for tf data 
         try:
 
-            trans = tfBuffer.lookup_transform("woeld", 'uav/imu', rospy.Time())
+            trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
