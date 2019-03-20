@@ -136,7 +136,13 @@ def regulate_with_yaw(roll_d, pitch_d, yaw):
     roll_ref = cos(yaw) * roll_d - sin(yaw) * pitch_d
     pitch_ref = sin(yaw) * roll_d + cos(yaw) * pitch_d
     return roll_ref, pitch_ref
-              
+
+def compute_error_limits(errors):
+    if 0 in errors:
+        return errors
+    m=min(errors)
+    lims=[i/m for i in errors]
+    return lims              
 
 
 
