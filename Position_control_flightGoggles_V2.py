@@ -341,7 +341,20 @@ if __name__ == '__main__':
     ####### initiate tf buffer 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
-
+    """
+    gates=rospy.get_param("/uav/gate_names")
+    gate_location={}
+    
+    for gate in gates :
+        center_location=[]
+        parameter="/uav/" + gate +"/location" 
+        position=rospy.get_param(parameter)
+        for i in range(3):
+            center_location.append((position[0][i] + position[1][i] + position[2][i] + position[3][i])/4)
+        gate_location[gate]=center_location
+        print(gate_location[gate])
+    
+    """
     
     desired_pose = [10 , 15 , 3] #x= 10, Y= 15 , z=3
     desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
