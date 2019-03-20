@@ -300,7 +300,7 @@ if __name__ == '__main__':
         center_location=[]
         parameter="/uav/" + gate +"/location" 
         position=rospy.get_param(parameter)
-        for i in range(3)
+        for i in range(3):
             center_location.append((position[0][i] + position[1][i] + position[2][i] + position[3][i])/4)
         gate_location[gate]=center_location
         print(gate_location[gate])
