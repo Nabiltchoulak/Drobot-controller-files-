@@ -362,7 +362,7 @@ if __name__ == '__main__':
     
     """
     
-    desired_pose = [10 , 15 , 3] #x= 10, Y= 15 , z=3
+    desired_pose = [10 , -5 , 3] #x= 10, Y= 15 , z=3
     desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
     
     controller = PositionController()
