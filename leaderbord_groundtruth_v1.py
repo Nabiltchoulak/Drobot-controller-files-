@@ -83,6 +83,7 @@ kp_roll,kd_roll,ki_roll=(0.1,0.2,0)
 kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
 
 #### Planar constants
+distance=2 # m : distance forward and behind the gate
 Threshold=0.2 # (drone - waypoint) < threshold ==> switch to next waypoint
 
 
@@ -376,7 +377,7 @@ if __name__ == '__main__':
         center_location=[]
         parameter="/uav/" + gate +"/location" 
         gate=rospy.get_param(parameter)
-        gate_waypoints.append(gate_to_waypoints(gate)[0],gate_to_waypoints(gate)[1])
+        gate_waypoints.append(gate_to_waypoints(gate,distance)[0],gate_to_waypoints(gate,distance)[1])
     
     ### Initialize controller
     controller = PositionController()
