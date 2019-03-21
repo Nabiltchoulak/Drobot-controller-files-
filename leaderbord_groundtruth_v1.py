@@ -425,7 +425,7 @@ if __name__ == '__main__':
         if (error_x**2,error_y**2,error_z**2)<threshold:
             gate_number+=1
             if gate_number==len(gate_waypoints):
-                gat_number-=1
+                gate_number-=1
        
         thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
         
