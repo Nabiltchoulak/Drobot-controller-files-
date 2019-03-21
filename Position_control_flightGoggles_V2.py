@@ -71,13 +71,13 @@ kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(28,2*sqrt(28),0.01)
+kp_thrust,kd_thrust,ki_thrust=(2,2*sqrt(2),0)
 
 #PID pitch
-kp_pitch,kd_pitch,ki_pitch=(2,2*sqrt(2),0.01)
+kp_pitch,kd_pitch,ki_pitch=(0.1,0.2,0)
 
 #PID roll
-kp_roll,kd_roll,ki_roll=(2,2*sqrt(2),0.01)
+kp_roll,kd_roll,ki_roll=(0.1,0.2,0)
 
 #PID yaw
 kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
@@ -138,10 +138,12 @@ def regulate_with_yaw(roll_d, pitch_d, yaw):
     return roll_ref, pitch_ref
 
 def compute_error_limits(errors):
+    errors=[abs(i) for i in errors]
     if 0 in errors:
         return errors
-    m=min(errors)
-    lims=[i/m for i in errors]
+    m=max(errors)
+    lims=[3*i/m for i in errors]
+    #lims=[3,3,3]
     return lims              
 
 
@@ -243,7 +245,7 @@ class PositionController:
     def compute_thrust(self,desired_z,actual_z,lim_z,delta_t):
         
         error_z=desired_z-actual_z
-        error_z=max(-lim_z,min(error_z,lim_z))
+        #error_z=max(-lim_z,min(error_z,lim_z))
         
         self.error_z_integral+=error_z*delta_t
         self.error_z_integral=max(-self.max_z_integral,min(self.error_z_integral,self.max_z_integral))
@@ -362,7 +364,7 @@ if __name__ == '__main__':
     
     """
     
-    desired_pose = [10 , -5 , 3] #x= 10, Y= 15 , z=3
+    desired_pose = [15, 30 ,10 ] #x= 10, Y= 15 , z=3
     desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
     
     controller = PositionController()
