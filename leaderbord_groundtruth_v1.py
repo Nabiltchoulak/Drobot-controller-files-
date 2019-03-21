@@ -406,7 +406,7 @@ if __name__ == '__main__':
             continue
             
         ########## get desired pose
-        desired_pose = gate_waypoints[0] # first gate
+        desired_pose = gate_waypoints[gate_number] # first gate
         desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
         
         ########### get the tf data
