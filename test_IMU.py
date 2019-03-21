@@ -133,11 +133,6 @@ def callback(data, dt):
     t.transform.translation.y = data.y
     t.transform.translation.z = 0.0"""
 
-    sender.transform.rotation.x = q1
-    sender.transform.rotation.y = q2
-    sender.transform.rotation.z = q3
-    sender.transform.rotation.w = q4
-
     br.sendTransform(sender)  ##### new sender more convenient
     pub.publish(sender)
 
