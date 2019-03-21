@@ -101,18 +101,26 @@ class bricolage():
 
 
 def callback(data, dt):
-    alpha = 0.1  # to choose between 0 and 1 preferably [0.02, 0.1] hkaya hna pk
-    pitch, roll, yaw = hello.roll, hello.pitch, hello.yaw
+    alpha = 0.0001  # to choose between 0 and 1 preferably [0.02, 0.1] hkaya hna pk
+    roll, pitch, yaw = hello.roll, hello.pitch, hello.yaw
     roll_acc, pitch_acc, yaw_acc = get_angle_accelerometer(data.linear_acceleration.x, data.linear_acceleration.y,
                                                            data.linear_acceleration.z)
 
     roll_gyro, pitch_gyro, yaw_gyro = get_angle_gyro(roll, pitch, yaw, data.angular_velocity.x, data.angular_velocity.y,
                                                      data.angular_velocity.z, dt[0])
+
     roll_new = (1 - alpha) * roll_gyro + alpha * roll_acc
-    pitch_new = (1 - alpha) * pitch_gyro + alpha * pitch_gyro
+    pitch_new = (1 - alpha) * pitch_gyro + alpha * pitch_acc
     # For the yaw angle we will use only the gyro so (a = 1)
     yaw_new = yaw_gyro
-    print(roll_acc, pitch_acc, yaw_acc)
+    print(roll_gyro, roll_acc)
+    print(roll_new, pitch_new, yaw_new)
+    #print(roll_gyro, pitch_gyro, yaw_gyro)
+    hello.roll = roll_new
+    hello.pitch = pitch_new
+    hello.yaw = yaw_new
+
+    #print(roll_new, pitch_new, yaw_new)
 
     sender = geometry_msgs.msg.TransformStamped()
     br = tf2_ros.TransformBroadcaster()
@@ -139,19 +147,18 @@ def callback(data, dt):
     # print(sender)
 
     # pub.publish(sender)
-    hello.roll = roll_new
-    hello.pitch = pitch_new
-    hello.yaw = yaw_new
+
+
 
 if __name__ == '__main__':
     rospy.init_node('data_fusion', anonymous=True)
-    rate = rospy.Rate(100)
-    dt = 0.01
+    rate = rospy.Rate(1000)
+    dt = 0.001
     hello = bricolage()
     while not rospy.is_shutdown():
         try:
             rospy.Subscriber("/uav/sensors/imu", Imu, callback, (dt,))
         except rospy.ROSInterruptException:
             pass
-
         rate.sleep()
+        rospy.spin()
