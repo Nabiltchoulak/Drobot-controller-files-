@@ -178,9 +178,9 @@ def reorder_waypoints(waypoints):
         d2=sum(([(waypoints[i][j]-waypoints[i+2][j])**2 for j in range(3)]))
         
         if d2 < d1:
-            a=waypoints[i]
-            waypoints[i]=waypoints[i+1]
-            waypoints[i+1]=a
+            a=waypoints[i+1]
+            waypoints[i+1]=waypoints[i+2]
+            waypoints[i+2]=a
     return waypoints
             
 
