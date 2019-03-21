@@ -177,10 +177,11 @@ def reorder_waypoints(waypoints):
         d1=sum(([(waypoints[i][j]-waypoints[i+1][j])**2 for j in range(3)]))
         d2=sum(([(waypoints[i][j]-waypoints[i+2][j])**2 for j in range(3)]))
         
-        if d2 < d1:
+        if d2 > d1:
             a=waypoints[i]
             waypoints[i]=waypoints[i+1]
             waypoints[i+1]=a
+    return waypoints
             
 
 ############################################ Quadcopter Controller class #################################################
