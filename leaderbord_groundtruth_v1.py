@@ -49,10 +49,10 @@ min_thrust= 0
 
 ##### Quadcopter pitch_yaw limitations (outter_loop) (roll controlled to be zero)
 
-max_pitch= pi/9 # rad
+max_pitch= pi/4 # rad
 min_pitch=-max_pitch
 
-max_roll= pi/9 # rad
+max_roll= pi/4 # rad
 min_roll=-max_roll
 
 max_yaw= pi # rad
@@ -71,13 +71,15 @@ kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(2,2*sqrt(2),0.01)
+kp_thrust,kd_thrust,ki_thrust=(5,5*sqrt(2),0.01)
 
-#PID pitch
-kp_pitch,kd_pitch,ki_pitch=(0.1,0.2,0)
+# PID pitch
+#kp_pitch, kd_pitch, ki_pitch = (0.1, 0.2, 0)
+kp_pitch, kd_pitch, ki_pitch = (0.12, 0.16, 0)
 
-#PID roll
-kp_roll,kd_roll,ki_roll=(0.1,0.2,0)
+# PID roll
+#kp_roll, kd_roll, ki_roll = (0.1, 0.2, 0)
+kp_roll, kd_roll, ki_roll = (0.12, 0.16, 0)
 
 #PID yaw
 kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
@@ -146,7 +148,7 @@ def compute_error_limits(errors):
     if 0 in errors:
         return errors
     m=max(errors)
-    lims=[3*i/m for i in errors]
+    lims=[10*i/m for i in errors]
     #lims=[3,3,3]
     return lims  
 
@@ -436,7 +438,7 @@ if __name__ == '__main__':
         desired_roll,desired_pitch=regulate_with_yaw(desired_roll, desired_pitch, -psi)
         
         
-        desired_yaw= 0
+        desired_yaw= -pi/2
         
         desired_phi,desired_theta,desired_psi= desired_roll,desired_pitch,desired_yaw
         
@@ -455,3 +457,4 @@ if __name__ == '__main__':
         Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate)
 
         rate.sleep()
+
