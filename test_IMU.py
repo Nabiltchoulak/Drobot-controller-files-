@@ -75,17 +75,15 @@ def get_angle_accelerometer(accelerometer_x, accelerometer_y, accelerometer_z, t
     g = 9.80665
     pi = 3.141592
     if type == 'degre':
-        roll_accelerometer = atan2(accelerometer_y,
-                                        sqrt((accelerometer_z + g) ^ 2 + accelerometer_x ^ 2)) * 180 / pi
+        roll_accelerometer = atan2(accelerometer_y, accelerometer_x) * 180 / pi
         pitch_accelerometer = atan2(accelerometer_x,
                                          sqrt((accelerometer_z + g) ^ 2 + accelerometer_y ^ 2)) * 180 / pi
-        yaw_accelerometer = atan2(accelerometer_x, accelerometer_y) * 180 / pi
+        yaw_accelerometer = 0
     if type == 'radians':
-        roll_accelerometer = atan2(accelerometer_y,
-                                        sqrt((accelerometer_z + g) ** 2 + accelerometer_x ** 2))
+        roll_accelerometer = atan2(accelerometer_y, accelerometer_x)
         pitch_accelerometer = atan2(accelerometer_x,
                                          sqrt((accelerometer_z + g) ** 2 + accelerometer_y ** 2))
-        yaw_accelerometer = atan2(accelerometer_x, accelerometer_y)
+        yaw_accelerometer = 0
 
     else:
         print('type error in get_angle_acc')
