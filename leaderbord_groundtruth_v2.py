@@ -172,7 +172,7 @@ def gate_to_waypoints(gate,distance):
     return (waypoint_1,waypoint_2)
 
 def reorder_waypoints(waypoints):
-    for i in range(len(waypoints)-2,2):
+    for i in range(0,len(waypoints)-2,2):
         
         d1=sum(([(waypoints[i][j]-waypoints[i+1][j])**2 for j in range(3)]))
         d2=sum(([(waypoints[i][j]-waypoints[i+2][j])**2 for j in range(3)]))
