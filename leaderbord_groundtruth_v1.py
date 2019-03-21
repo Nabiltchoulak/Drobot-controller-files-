@@ -84,7 +84,7 @@ kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
 
 #### Planar constants
 distance=2 # m : distance forward and behind the gate
-Threshold=0.2 # (drone - waypoint) < threshold ==> switch to next waypoint
+threshold=0.2 # (drone - waypoint) < threshold ==> switch to next waypoint
 
 
 
