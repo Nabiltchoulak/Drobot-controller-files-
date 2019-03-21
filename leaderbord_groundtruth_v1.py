@@ -377,7 +377,9 @@ if __name__ == '__main__':
         center_location=[]
         parameter="/uav/" + gate +"/location" 
         gate=rospy.get_param(parameter)
-        gate_waypoints.append(gate_to_waypoints(gate,distance)[0],gate_to_waypoints(gate,distance)[1])
+        gate_waypoints.append(gate_to_waypoints(gate,distance)[0])
+        gate_waypoints.append(gate_to_waypoints(gate,distance)[1])
+        
     
     ### Initialize controller
     controller = PositionController()
