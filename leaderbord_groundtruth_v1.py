@@ -427,7 +427,8 @@ if __name__ == '__main__':
             gate_number+=1
             if gate_number==len(gate_waypoints):
                 gate_number-=1
-	    thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
+		
+	thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
         desired_pitch= controller.compute_pitch(desired_x,x,lim_x,delta_t)
     
         desired_roll= - controller.compute_roll(desired_y,y,lim_y,delta_t)
