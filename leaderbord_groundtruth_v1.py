@@ -162,8 +162,10 @@ def gate_to_waypoints(gate,distance):
     
     # angle
     alpha=atan2(y3-y4,x3-x4)
-    waypoint_1 = xc-distance*sin(alpha) , yc+distance*cos(alpha)
-    waypoint_2 = xc+distance*sin(alpha) , yc-distance*cos(alpha)
+    z=(gate[0][-1]+gate[1][-1]+gate[2][-1]+gate[3][-1])/4
+    waypoint_1 = xc-distance*sin(alpha) , yc+distance*cos(alpha),z
+    waypoint_2 = xc+distance*sin(alpha) , yc-distance*cos(alpha),z
+    
     
     return (waypoint_1,waypoint_2)
 
