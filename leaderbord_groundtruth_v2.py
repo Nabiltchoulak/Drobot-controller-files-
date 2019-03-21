@@ -404,7 +404,8 @@ if __name__ == '__main__':
     gate_waypoints.insert(0,initial_pose[0:3])  
     
     gate_waypoints=reorder_waypoints(gate_waypoints)
-
+    del(gate_waypoints[11:19])
+    print(gate_waypoints)
     ### Initialize controller
     controller = PositionController()
 
