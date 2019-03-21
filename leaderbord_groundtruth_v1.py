@@ -71,7 +71,7 @@ kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(2,2*sqrt(2),0)
+kp_thrust,kd_thrust,ki_thrust=(2,2*sqrt(2),0.01)
 
 #PID pitch
 kp_pitch,kd_pitch,ki_pitch=(0.1,0.2,0)
@@ -382,7 +382,8 @@ if __name__ == '__main__':
         gate_waypoints.append(gate_to_waypoints(gate,distance)[0])
         gate_waypoints.append(gate_to_waypoints(gate,distance)[1])
         
-    
+    gate_waypoints.insert(0,[0.3,52,10])
+
     ### Initialize controller
     controller = PositionController()
 
@@ -409,7 +410,7 @@ if __name__ == '__main__':
         desired_pose = gate_waypoints[gate_number] # first gate
         desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
         
-        ########### get the tf data
+	########### get the tf data
         x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans)
         
         ########### transform tf to euler frame
@@ -422,13 +423,11 @@ if __name__ == '__main__':
         
         error_x,error_y,error_z=desired_x-x,desired_y-y,desired_z-z
         lim_x,lim_y,lim_z=compute_error_limits((error_x,error_y,error_z))
-        if (error_x**2,error_y**2,error_z**2)<threshold:
+        if (error_x**2+error_y**2+error_z**2)<threshold:
             gate_number+=1
             if gate_number==len(gate_waypoints):
                 gate_number-=1
-       
-        thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
-        
+	    thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
         desired_pitch= controller.compute_pitch(desired_x,x,lim_x,delta_t)
     
         desired_roll= - controller.compute_roll(desired_y,y,lim_y,delta_t)
@@ -452,7 +451,6 @@ if __name__ == '__main__':
         roll_rate, pitch_rate, yaw_rate = p, q, r
         
         ############ Publish 
-        
         Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate)
 
         rate.sleep()
