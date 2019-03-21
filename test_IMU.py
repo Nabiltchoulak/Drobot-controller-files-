@@ -63,12 +63,12 @@ def euler_to_quaternions(roll, pitch, yaw):
 
 # Get the angles from gyro that provides the variation of angles
 def get_angle_gyro(roll, pitch, yaw, gyro_x, gyro_y, gyro_z, dt):
-    roll_dot = gyro_x + sin(roll) * tan(pitch) * gyro_y + cos(roll) * tan(pitch) * gyro_z
-    pitch_dot = cos(roll) * gyro_y - sin(roll) * gyro_z
-    yaw_dot = sin(roll) / cos(pitch) * gyro_y + cos(roll) / cos(pitch) * gyro_z
+    #roll_dot = gyro_x + sin(roll) * tan(pitch) * gyro_y + cos(roll) * tan(pitch) * gyro_z
+    #pitch_dot = cos(roll) * gyro_y - sin(roll) * gyro_z
+    #yaw_dot = sin(roll) / cos(pitch) * gyro_y + cos(roll) / cos(pitch) * gyro_z
 
-    # roll_dot, pitch_dot, yaw_dot = pqr_to_phidot_thetadot_psidot(roll_dot, pitch_dot,
-    #                                                             yaw_dot, pitch, roll)
+    roll_dot, pitch_dot, yaw_dot = pqr_to_phidot_thetadot_psidot(gyro_x, gyro_y,
+                                                                 gyro_z, pitch, roll)
     new_roll = roll + roll_dot * dt
     new_pitch = pitch + pitch_dot * dt
     new_yaw = yaw + yaw_dot * dt
@@ -93,11 +93,16 @@ def get_angle_accelerometer(accelerometer_x, accelerometer_y, accelerometer_z, t
         print('type error in get_angle_acc')
     return roll_accelerometer, pitch_accelerometer, yaw_accelerometer
 
+class bricolage():
+    def __init__(self, roll=0, pitch=0, yaw=0):
+        self.roll = roll
+        self.pitch = pitch
+        self.yaw = yaw
 
 
 def callback(data, dt):
-    alpha = 0.02  # to choose between 0 and 1 preferably [0.02, 0.1] hkaya hna pk
-    pitch, roll, yaw = toEulerAngle(data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w)
+    alpha = 0.1  # to choose between 0 and 1 preferably [0.02, 0.1] hkaya hna pk
+    pitch, roll, yaw = hello.roll, hello.pitch, hello.yaw
     roll_acc, pitch_acc, yaw_acc = get_angle_accelerometer(data.linear_acceleration.x, data.linear_acceleration.y,
                                                            data.linear_acceleration.z)
 
@@ -107,9 +112,8 @@ def callback(data, dt):
     pitch_new = (1 - alpha) * pitch_gyro + alpha * pitch_gyro
     # For the yaw angle we will use only the gyro so (a = 1)
     yaw_new = yaw_gyro
+    print(roll_acc, pitch_acc, yaw_acc)
 
-    print('new', roll_new, pitch_new, yaw_new)
-    print('old', roll, pitch, yaw)
     sender = geometry_msgs.msg.TransformStamped()
     br = tf2_ros.TransformBroadcaster()
 
@@ -132,16 +136,18 @@ def callback(data, dt):
     sender.transform.rotation.w = q4
 
     br.sendTransform(sender)  ##### new sender more convenient
-    #print(sender)
+    # print(sender)
 
     # pub.publish(sender)
-
+    hello.roll = roll_new
+    hello.pitch = pitch_new
+    hello.yaw = yaw_new
 
 if __name__ == '__main__':
     rospy.init_node('data_fusion', anonymous=True)
-
-    rate = rospy.Rate(1000)
-    dt = 0.001
+    rate = rospy.Rate(100)
+    dt = 0.01
+    hello = bricolage()
     while not rospy.is_shutdown():
         try:
             rospy.Subscriber("/uav/sensors/imu", Imu, callback, (dt,))
