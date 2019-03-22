@@ -307,27 +307,27 @@ if __name__ == '__main__':
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
 
     Position=Coordinate()
-
+    
     ##### delta_t parameers
     rate=rospy.Rate(1000)
     delta_t=0.001
     while not rospy.is_shutdown():
-        
+        trans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
         ######### lookup for tf data 
         try:
 
-            trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+            #trans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
             fused_transform = tfBuffer.lookup_transform("world", 'data_fusion', rospy.Time())
-            rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
+            #rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, rospy.ROSInterruptException):
             rate.sleep()
             Publish_rateThrust(35,0,0,0)
             continue
-
+        
         ########### get the tf data
-        x,y,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)# *** A faire par Nabil 
-        z=Postion.z
+        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)# *** A faire par Nabil 
+        #z=Postion.z
         ###### transform tf to euler frame
         pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
         pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
