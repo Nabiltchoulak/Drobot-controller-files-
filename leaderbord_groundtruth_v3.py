@@ -16,11 +16,12 @@ import tf2_ros
 import geometry_msgs.msg
 from mav_msgs.msg import RateThrust
 from tf2_msgs.msg import TFMessage
+import sensor_msgs.msg
 ##############################################      Hyperparameters    ###################################################
 
 ##### Nodes handler
 class Coordinate():
-    def __init__(self,x=0,y=0,z=1)
+    def __init__(self,x=0,y=0,z=1):
         self.x=x
         self.y=y
         self.z=z 
@@ -90,7 +91,7 @@ kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
 
 #### Planar constants
 distance=0 # m : distance forward and behind the gate
-threshold=0.2 # (drone - waypoint) < threshold ==> switch to next waypoint
+threshold=1 # (drone - waypoint) < threshold ==> switch to next waypoint
 
 
 
@@ -349,12 +350,12 @@ class PositionController:
         yaw= kp_yaw*error_angle + ki_yaw*self.error_angle_integral + kd_yaw*angle_derivative
         
         return max(min_yaw, min(yaw,max_yaw))
-    
+
 class Coordinate():
-    def __init__(self,x=0,y=0,z=1)
+    def __init__(self,x=0,y=0,z=1):
         self.x=x
         self.y=y
-        self.z=z 
+        self.z=z
         
 #################################################  ROSNode Function  ##########################################################
 
@@ -381,12 +382,17 @@ def uav_groundtruth_pose(tf_data,fused_data):
     x=tf_data.transform.translation.x
     y=tf_data.transform.translation.y
     z=tf_data.transform.translation.z
+    '''
     q1=fused_data.transform.rotation.x
     q2=fused_data.transform.rotation.y
     q3=fused_data.transform.rotation.z
     q4=fused_data.transform.rotation.w
-    
-    return (x,y,z,q1,q2,q3,q4)
+    '''
+    q1=tf_data.transform.rotation.x
+    q2=tf_data.transform.rotation.y
+    q3=tf_data.transform.rotation.z
+    q4=tf_data.transform.rotation.w
+    return (x,y,q1,q2,q3,q4)
 
 
 
@@ -444,7 +450,6 @@ if __name__ == '__main__':
             trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
             fused_transform = tfBuffer.lookup_transform("world", 'fused_imu', rospy.Time())
             rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
-            z=Postion.z
         except tf2_ros.LookupException :
             Publish_rateThrust(35,0,0,0)
             rate.sleep()
@@ -457,10 +462,11 @@ if __name__ == '__main__':
         desired_pose = gate_waypoints[gate_number] # first gate
         
         desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
-        
+        print('desired', desired_x, desired_y, desired_z)
         ########### get the tf data
         x,y,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)
-        z=Postion.z
+        z = Position.z
+        print('actual', x, y, z)
         ########### transform tf to euler frame
         
         pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
@@ -478,11 +484,11 @@ if __name__ == '__main__':
                 gate_number-=1
                 
         thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
-        desired_pitch= controller.compute_pitch(desired_x,x,lim_x,delta_t)
+        desired_pitch = controller.compute_pitch(desired_x,x,lim_x,delta_t)
     
-        desired_roll= - controller.compute_roll(desired_y,y,lim_y,delta_t)
+        desired_roll = - controller.compute_roll(desired_y,y,lim_y,delta_t)
         
-        desired_roll,desired_pitch=regulate_with_yaw(desired_roll, desired_pitch, -psi)
+        desired_roll, desired_pitch = regulate_with_yaw(desired_roll, desired_pitch, -psi)
         
         
         desired_yaw= -pi/2
@@ -504,5 +510,5 @@ if __name__ == '__main__':
         Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate)
 
         rate.sleep()
-        rospy.spin()
+
 
