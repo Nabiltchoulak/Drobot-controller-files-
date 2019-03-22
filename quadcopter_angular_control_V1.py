@@ -267,15 +267,15 @@ def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     
     pub.publish(rate_data)
 
-def uav_groundtruth_pose(tf_data):
+def uav_groundtruth_pose(tf_data,fused_data):
     
     x=tf_data.transform.translation.x
     y=tf_data.transform.translation.y
     z=tf_data.transform.translation.z
-    q1=tf_data.transform.rotation.x
-    q2=tf_data.transform.rotation.y
-    q3=tf_data.transform.rotation.z
-    q4=tf_data.transform.rotation.w
+    q1=fused_data.transform.rotation.x
+    q2=fused_data.transform.rotation.y
+    q3=fused_data.transform.rotation.z
+    q4=fused_data.transform.rotation.w
     
     return (x,y,z,q1,q2,q3,q4)
 
@@ -293,32 +293,22 @@ if __name__ == '__main__':
     desired_pose = [pi/9 , 0 , 0 , 2] #pitch =pi/9 , roll= 0 , yaw= 0 , z=2
     desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
-    gates=rospy.get_param("/uav/gate_names")
-    gate_location={}
-    
-    for gate in gates :
-        center_location=[]
-        parameter="/uav/" + gate +"/location" 
-        position=rospy.get_param(parameter)
-        for i in range(3):
-            center_location.append((position[0][i] + position[1][i] + position[2][i] + position[3][i])/4)
-        gate_location[gate]=center_location
-        print(gate_location[gate])
-    
+
     ##### delta_t parameers
     rate=rospy.Rate(1000)
-    delta_t=0.0001
+    delta_t=0.001
     while not rospy.is_shutdown():
         
         ######### lookup for tf data 
         try:
 
             trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+            fused_transform = tfBuffer.lookup_transform("world", 'data_fusion', rospy.Time())
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
             continue
-        
+
         ########### get the tf data
         x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans)# *** A faire par Nabil 
         
