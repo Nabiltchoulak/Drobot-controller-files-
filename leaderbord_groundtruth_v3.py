@@ -91,7 +91,7 @@ kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
 
 #### Planar constants
 distance=0 # m : distance forward and behind the gate
-threshold=1 # (drone - waypoint) < threshold ==> switch to next waypoint
+threshold=0.2 # (drone - waypoint) < threshold ==> switch to next waypoint
 
 
 
@@ -392,7 +392,7 @@ def uav_groundtruth_pose(tf_data,fused_data):
     q2=tf_data.transform.rotation.y
     q3=tf_data.transform.rotation.z
     q4=tf_data.transform.rotation.w
-    return (x,y,q1,q2,q3,q4)
+    return (x,y,z,q1,q2,q3,q4)
 
 
 
@@ -464,8 +464,8 @@ if __name__ == '__main__':
         desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
         print('desired', desired_x, desired_y, desired_z)
         ########### get the tf data
-        x,y,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)
-        z = Position.z
+        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)
+        #z = Position.z
         print('actual', x, y, z)
         ########### transform tf to euler frame
         
