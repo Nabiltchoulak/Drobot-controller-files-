@@ -382,16 +382,11 @@ def uav_groundtruth_pose(tf_data,fused_data):
     x=tf_data.transform.translation.x
     y=tf_data.transform.translation.y
     z=tf_data.transform.translation.z
-    '''
     q1=fused_data.transform.rotation.x
     q2=fused_data.transform.rotation.y
     q3=fused_data.transform.rotation.z
     q4=fused_data.transform.rotation.w
-    '''
-    q1=tf_data.transform.rotation.x
-    q2=tf_data.transform.rotation.y
-    q3=tf_data.transform.rotation.z
-    q4=tf_data.transform.rotation.w
+
     return (x,y,z,q1,q2,q3,q4)
 
 
@@ -462,11 +457,11 @@ if __name__ == '__main__':
         desired_pose = gate_waypoints[gate_number] # first gate
         
         desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
-        print('desired', desired_x, desired_y, desired_z)
+        #print('desired', desired_x, desired_y, desired_z)
         ########### get the tf data
         x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)
         #z = Position.z
-        print('actual', x, y, z)
+        #print('actual', x, y, z)
         ########### transform tf to euler frame
         
         pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
