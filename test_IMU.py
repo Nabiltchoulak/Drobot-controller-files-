@@ -58,7 +58,7 @@ def euler_to_quaternions(roll, pitch, yaw):
     q2 = cy * cp * sr - sy * sp * cr
     q3 = sy * cp * sr + cy * sp * cr
     q4 = sy * cp * cr - cy * sp * sr
-    return q1, q2, q3, q4
+    return q2, q3, q4, q1
 
 
 # Get the angles from gyro that provides the variation of angles
