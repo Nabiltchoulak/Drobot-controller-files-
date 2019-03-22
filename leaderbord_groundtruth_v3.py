@@ -439,8 +439,8 @@ if __name__ == '__main__':
     controller = PositionController()
 
     ##### time parameers
-    rate=rospy.Rate(1000)
-    delta_t=0.001
+    rate=rospy.Rate(60)
+    delta_t=0.0166
     
     ##### first gate to pass
     gate_number=0
