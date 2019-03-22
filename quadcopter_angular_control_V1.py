@@ -307,10 +307,11 @@ if __name__ == '__main__':
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
+            Publish_rateThrust(35,0,0,0)
             continue
 
         ########### get the tf data
-        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans)# *** A faire par Nabil 
+        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)# *** A faire par Nabil 
         
         ###### transform tf to euler frame
         pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
