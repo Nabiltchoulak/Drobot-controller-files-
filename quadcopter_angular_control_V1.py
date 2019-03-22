@@ -320,7 +320,7 @@ if __name__ == '__main__':
             fused_transform = tfBuffer.lookup_transform("world", 'data_fusion', rospy.Time())
             rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
 
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, rospy.ROSInterruptException):
             rate.sleep()
             Publish_rateThrust(35,0,0,0)
             continue
