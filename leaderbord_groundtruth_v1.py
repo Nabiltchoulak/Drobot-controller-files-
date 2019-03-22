@@ -408,7 +408,8 @@ if __name__ == '__main__':
             fused_transform = tfBuffer.lookup_transform("world", 'fused_imu', rospy.Time())
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            rate.sleep()
+            Publish_rateThrust(35,0,0,0)
+	    rate.sleep()
             continue
             
         ########## get desired pose
