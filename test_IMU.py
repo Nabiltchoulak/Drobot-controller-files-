@@ -142,7 +142,8 @@ if __name__ == '__main__':
     rospy.init_node('data_fusion', anonymous=True)
     rate = rospy.Rate(1000)
     dt = 0.001
-    hello = bricolage()
+    initial_pose=rospy.get_param("/uav/flightgoggles_uav_dynamics/init_pose")
+    hello = bricolage(initial_pose[0],initial_pose[1],initial_pose[2])
     while not rospy.is_shutdown():
         try:
             rospy.Subscriber("/uav/sensors/imu", Imu, callback, (dt,))
