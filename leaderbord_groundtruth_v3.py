@@ -188,7 +188,15 @@ def reorder_waypoints(waypoints):
             waypoints[i+2]=a
     return waypoints
             
+def to_tf(x,y,z):
+    tf_data=geometry_msgs.msg.TransformStamped()
+    tf_data.transform.translation.x=x  
+    tf_data.transform.translation.y=y
+    tf_data.transform.translation.z=z
 
+
+    return tf_data 
+    
 ############################################ Quadcopter Controller class #################################################
 
 class PositionController:
@@ -360,8 +368,6 @@ class Coordinate():
 #################################################  ROSNode Function  ##########################################################
 
 
-def callback(data):
-    Position.z= -data.range
 
 def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data=RateThrust()
@@ -399,8 +405,11 @@ if __name__ == '__main__':
     ####### initiate tf buffer 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)####
+
+    kick=True
+
     #### Transform each gate location as 2 waypoints, and save all the waypoints in a list
-     
+    
     gates=rospy.get_param("/uav/gate_names")
     gate_waypoints=[]
     
@@ -440,11 +449,20 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         
         ######### lookup for tf data 
-        try:
+        
+        ################# Slam calling process 
+        try :
+            trans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
+            #gt=tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+        
+        except: 
+            trans=to_tf(Position.x,Position.y,Position.z)
+            print(trans)
 
-            trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+        ################# IMU calling process
+        try:
             fused_transform = tfBuffer.lookup_transform("world", 'fused_imu', rospy.Time())
-            rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
+            #rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
         except tf2_ros.LookupException :
             Publish_rateThrust(35,0,0,0)
             rate.sleep()
@@ -503,6 +521,10 @@ if __name__ == '__main__':
         
         ############ Publish 
         Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate)
+
+        Position.x=x
+	    Position.y=y
+	    Position.z=z
 
         rate.sleep()
 
