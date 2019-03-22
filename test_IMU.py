@@ -30,31 +30,30 @@ def pqr_to_phidot_thetadot_psidot(p, q, r, theta, phi):
 
 
 def toEulerAngle(i, j, k, one):
-    q_w, q_x, q_y, q_z = one, i, j, k  # modified to match quaternion ordrer given by flightGoggle
+    q_w, q_x, q_y, q_z = one, i, j, k  # modified to match quaternion order given by flightGoggle
 
     # roll (x-axis rotation)
-    sinr_cosp = 2.0 * (q_w * q_x + q_y * q_z);
-    cosr_cosp = 1.0 - 2.0 * (q_x * q_x + q_y * q_y);
-    roll = atan2(sinr_cosp, cosr_cosp);
+    sinr_cosp = 2.0 * (q_w * q_x + q_y * q_z)
+    cosr_cosp = 1.0 - 2.0 * (q_x * q_x + q_y * q_y)
+    roll = atan2(sinr_cosp, cosr_cosp)
 
     # pitch (y-axis rotation)
-    sinp = +2.0 * (q_w * q_y - q_z * q_x);
+    sinp = +2.0 * (q_w * q_y - q_z * q_x)
     if (fabs(sinp) >= 1):
-        pitch = copysign(pi / 2, sinp);  # use 90 degrees if out of range
+        pitch = copysign(pi / 2, sinp)  # use 90 degrees if out of range
     else:
-        pitch = asin(sinp);
+        pitch = asin(sinp)
 
     # yaw (z-axis rotation)
-    siny_cosp = +2.0 * (q_w * q_z + q_x * q_y);
-    cosy_cosp = +1.0 - 2.0 * (q_y * q_y + q_z * q_z);
-    yaw = atan2(siny_cosp, cosy_cosp);
+    siny_cosp = +2.0 * (q_w * q_z + q_x * q_y)
+    cosy_cosp = +1.0 - 2.0 * (q_y * q_y + q_z * q_z)
+    yaw = atan2(siny_cosp, cosy_cosp)
 
     return (pitch, roll, yaw)
 
 
 
 def euler_to_quaternions(roll, pitch, yaw):
-    # To see if use more CPU or ram is better (time)
     cr = cos(roll * 0.5)
     sr = sin(roll * 0.5)
     cp = cos(pitch * 0.5)
@@ -119,7 +118,7 @@ def callback(data, dt):
     sender.transform.rotation.z = q3
     sender.transform.rotation.w = q4
 
-    br.sendTransform(sender)  ##### new sender more convenient
+    br.sendTransform(sender)
 
 
 if __name__ == '__main__':
