@@ -91,10 +91,18 @@ def get_angle_accelerometer(accelerometer_x, accelerometer_y, accelerometer_z, t
     return roll_accelerometer, pitch_accelerometer, yaw_accelerometer
 
 class bricolage():
-    def __init__(self, roll=0, pitch=0, yaw=0):
+    def __init__(self, roll=0, pitch=0, yaw=-pi/2):
         self.roll = roll
         self.pitch = pitch
         self.yaw = yaw
+        '''
+        self.vx = 0
+        self.vy = 0
+        self.vz = 0
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        '''
 
 
 def callback(data, dt):
@@ -110,7 +118,16 @@ def callback(data, dt):
     pitch_new = (1 - alpha) * pitch_gyro + alpha * pitch_acc
     # For the yaw angle we will use only the gyro so (a = 1)
     yaw_new = yaw_gyro
-
+    #print(roll_new, pitch_new, yaw_new)
+    '''
+    hello.vx += data.linear_acceleration.x * dt[0]
+    hello.vy += data.linear_acceleration.y * dt[0]
+    hello.vz += data.linear_acceleration.z * dt[0]
+    hello.x += hello.vx * dt[0]
+    hello.y += hello.vy * dt[0]
+    hello.z += hello.vz * dt[0]
+    print(hello.x, hello.y, hello.z)
+    '''
     hello.roll = roll_new
     hello.pitch = pitch_new
     hello.yaw = yaw_new
@@ -133,17 +150,34 @@ def callback(data, dt):
     t.transform.translation.y = data.y
     t.transform.translation.z = 0.0"""
 
+    sender.transform.rotation.x = q1
+    sender.transform.rotation.y = q2
+    sender.transform.rotation.z = q3
+    sender.transform.rotation.w = q4
+
     br.sendTransform(sender)  ##### new sender more convenient
-    pub.publish(sender)
+    #pub.publish(sender)
 
 
 
 if __name__ == '__main__':
+
     rospy.init_node('data_fusion', anonymous=True)
     rate = rospy.Rate(1000)
     dt = 0.001
-    initial_pose=rospy.get_param("/uav/flightgoggles_uav_dynamics/init_pose")
-    hello = bricolage(initial_pose[0],initial_pose[1],initial_pose[2])
+    initial_pose = rospy.get_param("/uav/flightgoggles_uav_dynamics/init_pose")
+    q1, q2, q3, q4 = initial_pose[3], initial_pose[4], initial_pose[5], initial_pose[6]
+    roll_0, pitch_0, yaw_0 = toEulerAngle(q1, q2, q3, q4)
+    hello = bricolage(roll_0, pitch_0, yaw_0)
+    '''
+    ax = 0
+    ay = 0
+    az = 0
+    vx = 0
+    vy = 0
+    vz = 0
+    '''
+
     while not rospy.is_shutdown():
         try:
             rospy.Subscriber("/uav/sensors/imu", Imu, callback, (dt,))
