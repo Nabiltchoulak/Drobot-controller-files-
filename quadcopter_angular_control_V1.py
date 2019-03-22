@@ -61,14 +61,14 @@ kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(28,12,31)
+kp_thrust,kd_thrust,ki_thrust=(5,2*sqrt(5),0)
 
 
 
 ############################################      Utils functions     #####################################################
 
 class Coordinate():
-    def __init__(self,x=0,y=0,z=1)
+    def __init__(self,x=0,y=0,z=0):
         self.x=x
         self.y=y
         self.z=z 
@@ -257,12 +257,16 @@ class AnglesController:
     
     
         
+def to_tf(x,y,z):
+    tf_data=geometry_msgs.msg.TransformStamped()
+    tf_data.transform.translation.x=x  
+    tf_data.transform.translation.y=y
+    tf_data.transform.translation.z=z
 
+    return tf_data 
 
 
 #################################################  ROSNode Function  ##########################################################
-def callback(data):
-    Position.z= -data.range
 
 
 def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
@@ -276,14 +280,15 @@ def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data.thrust.x=np.float64(0.0)
     rate_data.thrust.x=np.float64(0.0)
     rate_data.thrust.z=np.float64(Thrust)
-    
-    pub.publish(rate_data)
+    if pub.publish(rate_data):
+        kick=False#for the first kick 
+	
 
 def uav_groundtruth_pose(tf_data,fused_data):
     
     x=tf_data.transform.translation.x
     y=tf_data.transform.translation.y
-    #z=tf_data.transform.translation.z
+    z=tf_data.transform.translation.z
     q1=fused_data.transform.rotation.x
     q2=fused_data.transform.rotation.y
     q3=fused_data.transform.rotation.z
@@ -300,33 +305,45 @@ if __name__ == '__main__':
     ####### initiate tf buffer 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
-
     
+    kick=True
     desired_pose = [pi/9 , 0 , 0 , 4] #pitch =pi/9 , roll= 0 , yaw= 0 , z=2
     desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
-
-    Position=Coordinate()
-    
+    initial_pose=rospy.get_param("/uav/flightgoggles_uav_dynamics/init_pose")
+    Position=Coordinate(initial_pose[0],initial_pose[1],initial_pose[2])
     ##### delta_t parameers
     rate=rospy.Rate(1000)
     delta_t=0.001
     while not rospy.is_shutdown():
-        trans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
         ######### lookup for tf data 
         try:
 
-            #trans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
-            fused_transform = tfBuffer.lookup_transform("world", 'data_fusion', rospy.Time())
+            trans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
+            #fused_transform = tfBuffer.lookup_transform("world", 'data_fusion', rospy.Time())
+            #rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
+	    gt=tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, rospy.ROSInterruptException):
+            trans=to_tf(Position.x,Position.y,Position.z)
+
+
+        try:
+
+            #rans = tfBuffer.lookup_transform("map", 'camera_link', rospy.Time())
+            fused_transform = tfBuffer.lookup_transform("world", 'fused_imu', rospy.Time())
             #rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException, rospy.ROSInterruptException):
+	    
+            if kick== True : #In the beginning if there is no imu put a kick once only 
+	        Publish_rateThrust(35,0,0,0)
+		print("sahit")
             rate.sleep()
-            Publish_rateThrust(35,0,0,0)
-            continue
-        
+	    
+	    continue
+        kick=False#We are good imu is here we passed the two faces
         ########### get the tf data
-        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)# *** A faire par Nabil 
+        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(gt,fused_transform)# *** A faire par Nabil 
         #z=Postion.z
         ###### transform tf to euler frame
         pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
@@ -345,5 +362,11 @@ if __name__ == '__main__':
 
         ############ Publish 
         Publish_rateThrust(thrust,roll_rate,pitch_rate,yaw_rate)
-
+        Position.x=x
+	Position.y=y
+	Position.z=z
+        print("IMU : ",z)
+	print("GT : ",gt.transform.translation.z)
         rate.sleep()
+
+
