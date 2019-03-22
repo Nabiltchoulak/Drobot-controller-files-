@@ -14,6 +14,7 @@ import rospy
 import numpy as np
 import tf2_ros
 import geometry_msgs.msg
+import sensor_msgs.msg
 from mav_msgs.msg import RateThrust
 from tf2_msgs.msg import TFMessage
 ##############################################      Hyperparameters    ###################################################
@@ -65,6 +66,14 @@ kp_thrust,kd_thrust,ki_thrust=(28,12,31)
 
 
 ############################################      Utils functions     #####################################################
+
+class Coordinate():
+    def __init__(self,x=0,y=0,z=1)
+        self.x=x
+        self.y=y
+        self.z=z 
+
+
 
 def pqr_to_phidot_thetadot_psidot(p,q,r,theta,phi):
     
@@ -252,6 +261,9 @@ class AnglesController:
 
 
 #################################################  ROSNode Function  ##########################################################
+def callback(data):
+    Position.z= -data.range
+
 
 def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     rate_data=RateThrust()
@@ -271,7 +283,7 @@ def uav_groundtruth_pose(tf_data,fused_data):
     
     x=tf_data.transform.translation.x
     y=tf_data.transform.translation.y
-    z=tf_data.transform.translation.z
+    #z=tf_data.transform.translation.z
     q1=fused_data.transform.rotation.x
     q2=fused_data.transform.rotation.y
     q3=fused_data.transform.rotation.z
@@ -290,9 +302,11 @@ if __name__ == '__main__':
     listener = tf2_ros.TransformListener(tfBuffer)
 
     
-    desired_pose = [pi/9 , 0 , 0 , 2] #pitch =pi/9 , roll= 0 , yaw= 0 , z=2
+    desired_pose = [pi/9 , 0 , 0 , 4] #pitch =pi/9 , roll= 0 , yaw= 0 , z=2
     desired_phi,desired_theta,desired_psi,desired_z = desired_pose[1],desired_pose[0],desired_pose[2],desired_pose[3]
     controller = AnglesController() # phi_initial=theta_initial=psi_initial=0, z_initial=1
+
+    Position=Coordinate()
 
     ##### delta_t parameers
     rate=rospy.Rate(1000)
@@ -304,6 +318,7 @@ if __name__ == '__main__':
 
             trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
             fused_transform = tfBuffer.lookup_transform("world", 'data_fusion', rospy.Time())
+            rospy.Subscriber("/uav/sensors/downward_laser_rangefinder", sensor_msgs.msg.Range, callback)
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
@@ -311,8 +326,8 @@ if __name__ == '__main__':
             continue
 
         ########### get the tf data
-        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)# *** A faire par Nabil 
-        
+        x,y,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)# *** A faire par Nabil 
+        z=Postion.z
         ###### transform tf to euler frame
         pitch,roll,yaw=toEulerAngle(q1,q2,q3,q4)
         pitch,roll,yaw=angle_transf(pitch),angle_transf(roll),angle_transf(yaw)
