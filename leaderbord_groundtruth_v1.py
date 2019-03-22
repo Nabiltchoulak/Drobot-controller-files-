@@ -352,17 +352,18 @@ def Publish_rateThrust(Thrust,roll_rate,pitch_rate,yaw_rate):
     
     pub.publish(rate_data)
 
-def uav_groundtruth_pose(tf_data):
+ef uav_groundtruth_pose(tf_data,fused_data):
     
     x=tf_data.transform.translation.x
     y=tf_data.transform.translation.y
     z=tf_data.transform.translation.z
-    q1=tf_data.transform.rotation.x
-    q2=tf_data.transform.rotation.y
-    q3=tf_data.transform.rotation.z
-    q4=tf_data.transform.rotation.w
+    q1=fused_data.transform.rotation.x
+    q2=fused_data.transform.rotation.y
+    q3=fused_data.transform.rotation.z
+    q4=fused_data.transform.rotation.w
     
     return (x,y,z,q1,q2,q3,q4)
+
 
 
 #################################################  ROSNode Main  ##########################################################
@@ -403,6 +404,8 @@ if __name__ == '__main__':
         try:
 
             trans = tfBuffer.lookup_transform("world", 'uav/imu', rospy.Time())
+	 
+            fused_transform = tfBuffer.lookup_transform("world", 'fused_imu', rospy.Time())
 
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             rate.sleep()
@@ -413,7 +416,7 @@ if __name__ == '__main__':
         desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
         
 	########### get the tf data
-        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans)
+        x,y,z,q1,q2,q3,q4=uav_groundtruth_pose(trans,fused_transform)
         
         ########### transform tf to euler frame
         
