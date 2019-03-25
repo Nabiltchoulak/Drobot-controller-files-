@@ -71,13 +71,13 @@ kp_phi_rate,kd_phi_rate,ki_phi_rate=(100,10,1)
 kp_psi_rate,kd_psi_rate,ki_psi_rate=(100,5,0)
 
 #PID thrust
-kp_thrust,kd_thrust,ki_thrust=(28,2*sqrt(28),0.01)
+kp_thrust,kd_thrust,ki_thrust=(2,2*sqrt(2),0)
 
 #PID pitch
-kp_pitch,kd_pitch,ki_pitch=(0.4,1,0)
+kp_pitch,kd_pitch,ki_pitch=(0.1,0.2,0)
 
 #PID roll
-kp_roll,kd_roll,ki_roll=(0.4,1,0)
+kp_roll,kd_roll,ki_roll=(0.1,0.2,0)
 
 #PID yaw
 kp_yaw,kd_yaw,ki_yaw=(1,2*sqrt(1),0.01)
@@ -132,7 +132,19 @@ def angle_transf(angle):
         angle=angle-2*pi
     return angle
         
-        
+def regulate_with_yaw(roll_d, pitch_d, yaw):
+    roll_ref = cos(yaw) * roll_d - sin(yaw) * pitch_d
+    pitch_ref = sin(yaw) * roll_d + cos(yaw) * pitch_d
+    return roll_ref, pitch_ref
+
+def compute_error_limits(errors):
+    errors=[abs(i) for i in errors]
+    if 0 in errors:
+        return errors
+    m=max(errors)
+    lims=[3*i/m for i in errors]
+    #lims=[3,3,3]
+    return lims              
 
 
 
@@ -230,9 +242,10 @@ class PositionController:
         return max(min_psi_rate, min(psi_rate,max_psi_rate))
     
     
-    def compute_thrust(self,desired_z,actual_z,delta_t):
+    def compute_thrust(self,desired_z,actual_z,lim_z,delta_t):
         
         error_z=desired_z-actual_z
+        #error_z=max(-lim_z,min(error_z,lim_z))
         
         self.error_z_integral+=error_z*delta_t
         self.error_z_integral=max(-self.max_z_integral,min(self.error_z_integral,self.max_z_integral))
@@ -241,6 +254,7 @@ class PositionController:
         self.last_z=actual_z
         
         thrust= kp_thrust*error_z + ki_thrust*self.error_z_integral + kd_thrust*z_derivative
+        
         thrust+=g
         
         if cos(phi) != 0 and cos(theta) !=0:
@@ -249,9 +263,10 @@ class PositionController:
         
         return max(min_thrust, min(thrust,max_thrust))
     
-    def compute_pitch(self,desired_x,actual_x,delta_t):
+    def compute_pitch(self,desired_x,actual_x,lim_x,delta_t):
         
         error_x=desired_x-actual_x
+        error_x=max(-lim_x,min(error_x,lim_x))
         
         self.error_x_integral+=error_x*delta_t
         self.error_x_integral=max(-self.max_x_integral,min(self.error_x_integral,self.max_x_integral))
@@ -261,11 +276,13 @@ class PositionController:
         
         pitch= kp_pitch*error_x + ki_pitch*self.error_x_integral + kd_pitch*x_derivative
         
+        
         return max(min_pitch, min(pitch,max_pitch))
     
-    def compute_roll(self,desired_y,actual_y,delta_t):
+    def compute_roll(self,desired_y,actual_y,lim_y,delta_t):
         
         error_y=desired_y-actual_y
+        error_y=max(-lim_y,min(error_y,lim_y))
         
         self.error_y_integral+=error_y*delta_t
         self.error_y_integral=max(-self.max_y_integral,min(self.error_y_integral,self.max_y_integral))
@@ -275,6 +292,7 @@ class PositionController:
         
         roll= kp_roll*error_y + ki_roll*self.error_y_integral + kd_roll*y_derivative
         
+                    
         return max(min_roll, min(roll,max_roll))
     
     
@@ -331,9 +349,22 @@ if __name__ == '__main__':
     ####### initiate tf buffer 
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
-
+    """
+    gates=rospy.get_param("/uav/gate_names")
+    gate_location={}
     
-    desired_pose = [7 , 7 , 3] #x= 10, Y= 15 , z=3
+    for gate in gates :
+        center_location=[]
+        parameter="/uav/" + gate +"/location" 
+        position=rospy.get_param(parameter)
+        for i in range(3):
+            center_location.append((position[0][i] + position[1][i] + position[2][i] + position[3][i])/4)
+        gate_location[gate]=center_location
+        print(gate_location[gate])
+    
+    """
+    
+    desired_pose = [15, 30 ,10 ] #x= 10, Y= 15 , z=3
     desired_x,desired_y,desired_z = desired_pose[0],desired_pose[1],desired_pose[2]
     
     controller = PositionController()
@@ -363,9 +394,18 @@ if __name__ == '__main__':
         
         ########### OutterLoop Control
         
-        thrust= controller.compute_thrust(desired_z, z, delta_t)
-        desired_pitch= controller.compute_pitch(desired_x,x,delta_t)
-        desired_roll= - controller.compute_roll(desired_y,y,delta_t)
+        error_x,error_y,error_z=desired_x-x,desired_y-y,desired_z-z
+        lim_x,lim_y,lim_z=compute_error_limits((error_x,error_y,error_z))
+       
+        thrust= controller.compute_thrust(desired_z, z,lim_z, delta_t)
+        
+        desired_pitch= controller.compute_pitch(desired_x,x,lim_x,delta_t)
+    
+        desired_roll= - controller.compute_roll(desired_y,y,lim_y,delta_t)
+        
+        desired_roll,desired_pitch=regulate_with_yaw(desired_roll, desired_pitch, -psi)
+        
+        
         desired_yaw= 0
         
         desired_phi,desired_theta,desired_psi= desired_roll,desired_pitch,desired_yaw
